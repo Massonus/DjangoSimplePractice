@@ -19,7 +19,13 @@
     <tr>
         <td valign=top>
             {% block mainmenu %}
-                {% show_main_menu %}
+                {% if user.is_authenticated %}
+                    {% show_main_menu is_auth=True %}
+                {% else %}
+                    {% show_main_menu is_auth=False %}
+                {% endif %}
+
+
             {% endblock mainmenu %}
 
 
@@ -34,7 +40,15 @@
                                 <li><a href="{% url 'home' %}">Все категории</a></li>
                             {% endif %}
 
-                            {% show_categories cat_selected=cat_selected %}
+                            {% for category in cats %}
+                                {% if category.women__count > 0 %}
+                                    {% if category.id == cat_selected %}
+                                        <li class="selected">{{ category.name }}</li>
+                                    {% else %}
+                                        <li><a href="{{ category.get_absolute_url }}">{{ category.name }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
 
                             <li class="share">
                                 <p>Наш канал</p>

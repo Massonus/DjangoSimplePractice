@@ -30,5 +30,9 @@ def show_categories(sort=None, cat_selected=0):
 
 
 @register.inclusion_tag('women/main_menu.html')
-def show_main_menu():
+def show_main_menu(is_auth=False):
+    if not is_auth:
+        un_auth_menu = menu.copy()
+        un_auth_menu.pop(1)
+        return {'menu': un_auth_menu}
     return {'menu': menu}

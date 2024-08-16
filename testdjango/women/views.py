@@ -1,21 +1,24 @@
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import *
 from .models import *
+from .utils import *
 
 
-class WomenHome(ListView):
+class WomenHome(DataMixin, ListView):
     model = Women
     template_name = 'women/index.html'
     context_object_name = 'posts'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Women Home'
-        context['cat_selected'] = 0
-        return context
+        c_def = self.get_user_context(title='Main page')
+        # объединение двух словарей контекстов и возврат их
+        return dict(list(context.items()) + list(c_def.items()))
 
     def get_queryset(self):
         return Women.objects.filter(is_published=True)
@@ -31,20 +34,21 @@ class WomenHome(ListView):
 #
 #     return render(request, 'women/index.html', context=context)
 
-
+# @login_required
 def about(request):
     return render(request, 'women/about.html', {'title': 'About'})
 
 
-class AddPage(CreateView):
+class AddPage(LoginRequiredMixin, DataMixin, CreateView):
     form_class = AddPostForm
     template_name = 'women/add_page.html'
     success_url = reverse_lazy('home')
+    login_url = reverse_lazy('home')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Add Page'
-        return context
+        c_def = self.get_user_context(title='Main page')
+        return dict(list(context.items()) + list(c_def.items()))
 
 
 # def add_page(request):
@@ -62,8 +66,87 @@ def contact(request):
     return HttpResponse('Contact page')
 
 
+def login(request):
+    return HttpResponse('Login page')
+
+
+def categories(request, catid):
+    if request.GET:
+        print(request.GET)
+    return HttpResponse(f"<h1>second</h1><p>{catid}</p>")
+
+
+def archive(request, year):
+    if int(year) > 2024:
+        return redirect('home', permanent=True)
+    return HttpResponse(f'Archive for {year}')
+
+
+class ShowPost(DataMixin, DetailView):
+    model = Women
+    template_name = 'women/post.html'
+    slug_url_kwarg = 'post_slug'
+    # pk_url_kwarg =
+    context_object_name = 'post'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        c_def = self.get_user_context(title=context['post'])
+        return dict(list(context.items()) + list(c_def.items()))
+
+
+# def show_post(request, post_slug):
+#     post = get_object_or_404(Women, slug=post_slug)
+#
+#     context = {
+#         'post': post,
+#         'title': post.title,
+#         'cat_selected': post.category_id,
+#     }
+#
+#     return render(request, 'women/post.html', context=context)
+
+
+class WomenCategory(DataMixin, ListView):
+    model = Women
+    template_name = 'women/index.html'
+    context_object_name = 'posts'
+    allow_empty = False
+
+    def test(self):
+        self.req
+    def get_queryset(self):
+        return Women.objects.filter(category__slug=self.kwargs['category_slug'], is_published=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        c_def = self.get_user_context(title=f'Category - {context['posts'][0].category}',
+                                      cat_selected=context['posts'][0].category_id)
+        return dict(list(context.items()) + list(c_def.items()))
+
+
+# def show_category(request, category_slug):
+#     category_id = Category.objects.get(slug=category_slug)
+#     posts = Women.objects.filter(category_id=category_id)
+#
+#     if len(posts) == 0:
+#         raise Http404()
+#
+#     context = {
+#         'posts': posts,
+#         'title': 'Main page with categories',
+#         'cat_selected': category_slug,
+#     }
+#
+#     return render(request, 'women/index.html', context=context)
+
+
+def page_note_found(request, exception):
+    return HttpResponseNotFound(f'<h1>Page note found</h1>')
+
+
 def practice(request):
-    from django.db import connection
+    # from django.db import connection
 
     # women_list = Women.objects.all()
     # for women in women_list:
@@ -98,7 +181,7 @@ def practice(request):
     # cats = Category.objects.all()
     # print(Women.objects.filter(category__in=cats))
 
-    from django.db.models import Q
+    # from django.db.models import Q
 
     # использование класса Q помогает строить фильтр с помощью или (|), и (&), НЕ (~) (в этом случае)
     # print(Women.objects.filter(~Q(pk__lt=5) | Q(category_id=2)))
@@ -139,7 +222,7 @@ def practice(request):
     # print(Category.objects.filter(women__title__contains='ли'))
     # print(Category.objects.filter(women__title__contains='ли').distinct())
 
-    from django.db.models import Min, Max, Count, Sum, Avg
+    # from django.db.models import Min, Max, Count, Sum, Avg
 
     # print(Women.objects.aggregate(Min('category_id'), Max('category_id')))
     # print(Women.objects.aggregate(cat_min=Min('category_id'), cat_max=Max('category_id')))
@@ -166,7 +249,7 @@ def practice(request):
     # c = Category.objects.annotate(total=Count('women')).filter(total__gt=0)
     # print(c)
 
-    from django.db.models import F
+    # from django.db.models import F
     # w = Women.objects.filter(pk__gt=F('category_id'))
     # print(w)
     # пример увеличения количества views в таблице
@@ -175,7 +258,7 @@ def practice(request):
     # w.views = F('views') + 1 подход более рекомендуем например при одновременном получении страницы разными юзерами
     # w.views = F('views') + 1 = m.views += 1
 
-    from django.db.models.functions import Length
+    # from django.db.models.functions import Length
 
     # ps = Women.objects.annotate(len=Length('title'))
     # for item in ps:
@@ -186,80 +269,3 @@ def practice(request):
     #     print(item.pk, item.title)
 
     return HttpResponse('Practice page. Look at terminal')
-
-
-def login(request):
-    return HttpResponse('Login page')
-
-
-def categories(request, catid):
-    if request.GET:
-        print(request.GET)
-    return HttpResponse(f"<h1>second</h1><p>{catid}</p>")
-
-
-def archive(request, year):
-    if int(year) > 2024:
-        return redirect('home', permanent=True)
-    return HttpResponse(f'Archive for {year}')
-
-
-class ShowPost(DetailView):
-    model = Women
-    template_name = 'women/post.html'
-    slug_url_kwarg = 'post_slug'
-    # pk_url_kwarg =
-    context_object_name = 'post'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = context['post']
-        return context
-
-
-# def show_post(request, post_slug):
-#     post = get_object_or_404(Women, slug=post_slug)
-#
-#     context = {
-#         'post': post,
-#         'title': post.title,
-#         'cat_selected': post.category_id,
-#     }
-#
-#     return render(request, 'women/post.html', context=context)
-
-
-class WomenCategory(ListView):
-    model = Women
-    template_name = 'women/index.html'
-    context_object_name = 'posts'
-    allow_empty = False
-
-    def get_queryset(self):
-        return Women.objects.filter(category__slug=self.kwargs['category_slug'], is_published=True)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = f'Category - {context['posts'][0].category}'
-        context['cat_selected'] = context['posts'][0].category_id
-        return context
-
-
-# def show_category(request, category_slug):
-#     category_id = Category.objects.get(slug=category_slug)
-#     posts = Women.objects.filter(category_id=category_id)
-#
-#     if len(posts) == 0:
-#         raise Http404()
-#
-#     context = {
-#         'posts': posts,
-#         'title': 'Main page with categories',
-#         'cat_selected': category_slug,
-#     }
-#
-#     return render(request, 'women/index.html', context=context)
-
-
-def page_note_found(request, exception):
-    return HttpResponseNotFound(f'<h1>Page note found</h1>')
