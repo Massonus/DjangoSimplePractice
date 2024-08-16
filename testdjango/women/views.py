@@ -1,11 +1,11 @@
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+
 from .forms import *
-from .models import *
 from .utils import *
 
 
@@ -36,7 +36,14 @@ class WomenHome(DataMixin, ListView):
 
 # @login_required
 def about(request):
-    return render(request, 'women/about.html', {'title': 'About'})
+    # пример пагинации в функции представления
+    contact_list = Women.objects.all()
+    paginator = Paginator(contact_list, 3)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'women/about.html', {'page_obj': page_obj, 'title': 'About'})
 
 
 class AddPage(LoginRequiredMixin, DataMixin, CreateView):
@@ -115,6 +122,7 @@ class WomenCategory(DataMixin, ListView):
 
     def test(self):
         self.req
+
     def get_queryset(self):
         return Women.objects.filter(category__slug=self.kwargs['category_slug'], is_published=True)
 
@@ -122,6 +130,17 @@ class WomenCategory(DataMixin, ListView):
         context = super().get_context_data(**kwargs)
         c_def = self.get_user_context(title=f'Category - {context['posts'][0].category}',
                                       cat_selected=context['posts'][0].category_id)
+        return dict(list(context.items()) + list(c_def.items()))
+
+
+class RegisterUser(DataMixin, CreateView):
+    form_class = RegisterUserForm
+    template_name = 'women/register.html'
+    success_url = reverse_lazy('login')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        c_def = self.get_user_context(title='Registration')
         return dict(list(context.items()) + list(c_def.items()))
 
 
@@ -153,7 +172,7 @@ def practice(request):
     #     print(women)
     #
     # print('-' * 30)
-    ordered_women = Women.objects.order_by('pk')
+    # ordered_women = Women.objects.order_by('pk')
 
     # ordered_women = Women.objects.all().reverse() = Women.objects.all().order_by('-pk')
     # добавляем __gte (>=) или __lte (<=) к аргументу если необходимо
@@ -166,7 +185,7 @@ def practice(request):
 
     # woman = Women.objects.get(pk=1)
     # print(woman.category.name)
-    cat = Category.objects.get(pk=1)
+    # cat = Category.objects.get(pk=1)
     # по умолчанию имя вторичной модели и добавление _set выводит все связанные объекты
     # cat.women_set.all() = cat.get_posts.all() если в Foreign Key Category добавлено related_name='get_posts'
 
@@ -268,4 +287,15 @@ def practice(request):
     # for item in w:
     #     print(item.pk, item.title)
 
+    # from django.core.paginator import Paginator
+    #
+    # women = ['Angelina', 'Jennifer', 'Julia', 'Margo', 'Uma']
+    # paginator = Paginator(women, 3)
+    # print(paginator.count, paginator.num_pages, paginator.page_range)
+    # p1 = paginator.page(1)
+    # print(p1.object_list)
+    # print(p1.has_next())
+    # print(p1.has_previous())
+    # print(p1.has_other_pages())
+    # print(p1.next_page_number())
     return HttpResponse('Practice page. Look at terminal')
