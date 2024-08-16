@@ -28,10 +28,7 @@ def show_categories(sort=None, cat_selected=0):
     return {'cats': cats, 'cat_selected': cat_selected}
 
 
-@register.inclusion_tag('women/main_menu.html')
-def show_main_menu(is_auth=False):
-    if not is_auth:
-        un_auth_menu = menu.copy()
-        un_auth_menu.pop(1)
-        return {'menu': un_auth_menu}
-    return {'menu': menu}
+@register.inclusion_tag('women/main_menu.html', takes_context=True)
+def show_main_menu(context, is_auth=False):
+    menu_to_display = menu if is_auth else menu[:1] + menu[2:]
+    return {'menu': menu_to_display, 'is_auth': is_auth, 'request': context['request']}

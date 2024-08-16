@@ -1,4 +1,6 @@
+from django.contrib.auth import logout, login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, redirect
@@ -73,8 +75,8 @@ def contact(request):
     return HttpResponse('Contact page')
 
 
-def login(request):
-    return HttpResponse('Login page')
+# def login(request):
+#     return HttpResponse('Login page')
 
 
 def categories(request, catid):
@@ -120,9 +122,6 @@ class WomenCategory(DataMixin, ListView):
     context_object_name = 'posts'
     allow_empty = False
 
-    def test(self):
-        self.req
-
     def get_queryset(self):
         return Women.objects.filter(category__slug=self.kwargs['category_slug'], is_published=True)
 
@@ -142,6 +141,29 @@ class RegisterUser(DataMixin, CreateView):
         context = super().get_context_data(**kwargs)
         c_def = self.get_user_context(title='Registration')
         return dict(list(context.items()) + list(c_def.items()))
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return redirect('home')
+
+
+class LoginUser(DataMixin, LoginView):
+    form_class = LoginUserForm
+    template_name = 'women/login.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        c_def = self.get_user_context(title='Login')
+        return dict(list(context.items()) + list(c_def.items()))
+
+    # def get_succesfs_url(self):
+    #     return reverse_lazy('home')
+
+
+def logout_user(request):
+    logout(request)
+    return redirect('login')
 
 
 # def show_category(request, category_slug):
