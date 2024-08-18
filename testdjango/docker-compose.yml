@@ -1,36 +1,36 @@
-version: '3'
+version: '3'  # Версия конфигурации Docker Compose. Версия 3 поддерживает функции, необходимые для настройки контейнеров.
 
 services:
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: djangosimple
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  db:  # Сервис для базы данных PostgreSQL
+    image: postgres:13  # Используемый Docker образ для PostgreSQL версии 13
+    environment:  # Определяем переменные окружения для настройки базы данных
+      POSTGRES_DB: djangosimple  # Имя базы данных, которая будет создана
+      POSTGRES_USER: postgres  # Имя пользователя для базы данных
+      POSTGRES_PASSWORD: root  # Пароль для пользователя базы данных
+    volumes:  # Монтируем том для сохранения данных базы данных
+      - postgres_data:/var/lib/postgresql/data  # Монтирование тома для хранения данных базы данных
 
-  web:
-    build: .
-    command: gunicorn testdjango.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/app
-      - /app/media
+  web:  # Сервис для веб-приложения на Django
+    build: .  # Контекст сборки Docker (используется Dockerfile в текущей директории)
+    command: gunicorn testdjango.wsgi:application --bind 0.0.0.0:8000  # Команда для запуска приложения с помощью Gunicorn на порту 8000
+    volumes:  # Монтируем директории в контейнере
+      - .:/app  # Монтирование текущей директории в контейнер в /app
+      - /app/media  # Монтирование директории для медиа-файлов в /app/media
     expose:
-      - "8000"
-    depends_on:
-      - db
+      - "8000"  # Открытие порта 8000 внутри контейнера (используется для связи между контейнерами)
+    depends_on:  # Определение зависимостей для этого сервиса
+      - db  # Этот сервис зависит от сервиса db (то есть db должен быть запущен перед web)
 
-  nginx:
-    image: nginx:latest
+  nginx:  # Сервис для Nginx, который будет использоваться как прокси-сервер
+    image: nginx:latest  # Используемый Docker образ для Nginx
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./staticfiles:/static
-      - ./media:/media
-    depends_on:
-      - web
+      - "80:80"  # Проброс порта 80 на хост-машину (внешний порт 80 связывается с портом 80 внутри контейнера)
+    volumes:  # Монтируем директории и конфигурационные файлы в контейнере
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # Монтирование файла конфигурации Nginx в контейнер
+      - ./staticfiles:/static  # Монтирование директории с собранными статическими файлами в контейнер
+      - ./media:/media  # Монтирование директории с медиа-файлами в контейнер
+    depends_on:  # Определение зависимостей для этого сервиса
+      - web  # Этот сервис зависит от сервиса web (то есть web должен быть запущен перед nginx)
 
 volumes:
-  postgres_data:
+  postgres_data:  # Определение тома для хранения данных базы данных
