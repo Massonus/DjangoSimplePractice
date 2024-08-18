@@ -15,7 +15,6 @@ services:
     command: gunicorn testdjango.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
-      - /app/staticfiles
     expose:
       - "8000"
     depends_on:
