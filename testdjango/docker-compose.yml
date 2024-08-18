@@ -11,12 +11,10 @@ services:
       POSTGRES_PASSWORD: root
 
   web:
-    build:
-      context: ./testdjango  # Указывает на поддиректорию с Dockerfile
-      dockerfile: Dockerfile  # Указывает имя Dockerfile
+    build: .
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./testdjango:/app  # Указывает, что приложение находится в поддиректории
+      - .:/code
     ports:
       - "8000:8000"
     depends_on:
