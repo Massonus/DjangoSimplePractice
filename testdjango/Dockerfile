@@ -1,16 +1,20 @@
-# Используем официальный Python образ
+# Используем базовый образ Python
 FROM python:3.12.4
 
-# Устанавливаем переменные окружения
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 # Устанавливаем рабочую директорию
-WORKDIR /code
+WORKDIR /app
+
+# Копируем файлы проекта в контейнер
+COPY . /app/
 
 # Устанавливаем зависимости
-COPY requirements.txt /code/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код проекта
-COPY . /code/
+# Собираем статические файлы
+RUN python manage.py collectstatic --noinput
+
+# Открываем порт 8000
+EXPOSE 8000
+
+# Команда для запуска приложения
+CMD ["gunicorn", "testdjango.wsgi:application", "--bind", "0.0.0.0:8000"]

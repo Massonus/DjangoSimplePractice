@@ -22,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+hh@^jzke@e4uk-&40_(e=t5i$@06v+*nir3%fz+y=d@l0)d%f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'ec2-18-159-132-218.eu-central-1.compute.amazonaws.com']
 
 # Application definition
 
@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'testdjango.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'djangosimple',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'db',
-        'PORT': '5432',
+        'NAME': 'djangosimple',   # Имя базы данных
+        'USER': 'postgres',       # Имя пользователя
+        'PASSWORD': 'root',       # Пароль
+        'HOST': 'db',             # Имя хоста (в Docker это имя сервиса базы данных)
+        'PORT': '5432',           # Порт для подключения
     }
 }
 
