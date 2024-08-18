@@ -10,6 +10,9 @@ COPY . /app/
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Устанавливаем gunicorn
+RUN pip install gunicorn
+
 # Собираем статические файлы
 RUN python manage.py collectstatic --noinput
 
